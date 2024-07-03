@@ -65,7 +65,7 @@ public final class Utils {
         }
     }
 
-    public static BenchmarkData parseJsonToMessagesRow(String json) {
+    public static BenchmarkData fromJsonToBenchmarkData(String json) {
         JsonObject jsonObj = GSON.fromJson(json, JsonObject.class);
         JsonArray messages = jsonObj.getAsJsonArray("messages");
         List<Action> messagesList = new ArrayList<>();
@@ -81,11 +81,11 @@ public final class Utils {
                 messagesList);
     }
     
-    public static List<BenchmarkData> parseMessagesRows(JsonArray jsonArray) {
+    public static List<BenchmarkData> parseBenchmarkData(JsonArray jsonArray) {
         List<BenchmarkData> messagesRows = new ArrayList<>();
         for (int i = 0; i < jsonArray.size(); i++) {
             String messagesRowString = jsonArray.get(i).toString();
-            messagesRows.add(Utils.parseJsonToMessagesRow(messagesRowString));
+            messagesRows.add(Utils.fromJsonToBenchmarkData(messagesRowString));
         }
 
         return messagesRows;

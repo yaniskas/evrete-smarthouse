@@ -13,8 +13,6 @@ import org.evrete.api.IntToValue;
 import org.evrete.api.Knowledge;
 import org.evrete.api.StatefulSession;
 
-import com.example.Measurement;
-
 import com.example.MsgTypes.*;
 
 public class SmartHouseMonitor {
@@ -122,6 +120,11 @@ public class SmartHouseMonitor {
                     rule3Matches.add(List.of(motion1.id(), contact.id(), motion2.id()));
                 })
                 .build();
+                // .builder()
+                // .newRule("ShutOff")
+                // .forEach(
+                //         "$shutOff", Action.ShutOff.class)
+                // .execute(ctx -> )
 
         return knowledge;
     }
@@ -213,7 +216,6 @@ public class SmartHouseMonitor {
             }
         }
     }
-
     
     public List<Integer> matchFact(Knowledge knowledge, StatefulSession session, Action fact) {
         List<List<Integer>> matchesAcrossRules = new ArrayList<>();
@@ -241,6 +243,7 @@ public class SmartHouseMonitor {
             session.delete(factHandles.get(selectedMatch.get(0)));
             session.delete(factHandles.get(selectedMatch.get(1)));
             session.delete(factHandles.get(selectedMatch.get(2)));
+            // Clean up
         }
         return selectedMatch;
     }
@@ -258,7 +261,7 @@ public class SmartHouseMonitor {
         }
 
         endTime = System.currentTimeMillis();
-        
+
         System.out.println("Matches: " + matches.size());
 
         return new Measurement(Duration.ofMillis(endTime - startTime));
