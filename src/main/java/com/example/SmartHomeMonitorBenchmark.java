@@ -88,6 +88,7 @@ public class SmartHomeMonitorBenchmark {
 
     public void runWarmup() {
         // Collect the measurements from the warmup repetitions
+        System.out.println("Starting Warmup");
         Map<Integer, Long> warmupResults = new TreeMap<>();
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             for (BenchmarkData benchmarkData : monitorData) {
@@ -109,19 +110,14 @@ public class SmartHomeMonitorBenchmark {
 
                 Long averageTime = measurements.stream().mapToLong(m -> m.time().toMillis()).sum() / warmupRepetitions;
                 warmupResults.put(benchmarkData.numberOfRandomFacts(), averageTime);
-
-                System.out.println("MEASUREMENTS: " + measurements.size());
-                System.out
-                        .println(String.format("Number of facts: %d, Number of random facts: %d, Elapsed time: %s (ms)",
-                                benchmarkData.numberOfFacts(), benchmarkData.numberOfRandomFacts(), averageTime));
             }
         }
-
-        System.out.println("Warmup measurements: " + warmupResults);
+        System.out.println("Warmup Finished");
     }
 
     public void runBenchmark() {
         // Collect the measurements from the benchmark repetitions
+        System.out.println("Starting Benchmark");
         Map<Integer, List<Long>> benchmarkResults = new TreeMap<>();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -151,13 +147,12 @@ public class SmartHomeMonitorBenchmark {
         SmartHomeMonitorBenchmark.writeToCsv(benchmarkResults,
                 String.format("%s/data/%s_RETE_SmartHouse.csv",
                         System.getProperty("user.dir"), timestamp));
-
+        System.out.println("Benchmark Finished");
     }
 
     public static void writeToCsv(Map<Integer, List<Long>> benchmarkResults, String filename) {
         // Write the benchmark results to a CSV file
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-
             // Write the data
             for (Map.Entry<Integer, List<Long>> entry : benchmarkResults.entrySet()) {
                 int numberOfRandomFacts = entry.getKey();
@@ -166,7 +161,7 @@ public class SmartHomeMonitorBenchmark {
                 String e = String.format("%d;%s\n", numberOfRandomFacts, timesString);
                 writer.write(e);
             }
-
+            System.out.println("Benchmark results written to " + filename);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -1,12 +1,9 @@
 package com.example;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedTransferQueue;
-import java.util.stream.IntStream;
 
 import org.evrete.KnowledgeService;
 import org.evrete.api.Knowledge;
@@ -17,12 +14,12 @@ import com.google.gson.JsonArray;
 
 public class App {
 
-    final static String SMART_HOUSE_DATA_FILE = "src/main/java/com/example/MonitorData/2024_07_02_13_53_22_smartHouseData.json";
+    final static String SMART_HOUSE_DATA_FILE = "src/main/java/com/example/MonitorData/2024_07_05_12_25_41_smartHouseData.json";
     
     static String smartHouseDataStr = Utils.readFileAsJsonStr(SMART_HOUSE_DATA_FILE);
     static JsonArray smartHouseData = Utils.parseJson(smartHouseDataStr);
     static List<BenchmarkData> benchmarkData = Utils.parseBenchmarkData(smartHouseData);
-    static List<Action> sampleData = benchmarkData.get(2).facts();
+    static List<Action> sampleData = benchmarkData.get(1).facts();
 
     static void runMonitor() throws InterruptedException, ExecutionException {
         Long startTime = null; 
@@ -59,17 +56,14 @@ public class App {
         KnowledgeService service = new KnowledgeService();
         SmartHouseMonitor monitor = new SmartHouseMonitor();
         Knowledge knowledge = monitor.createMonitorKnowledge(service);
-        List<Action> facts = benchmarkData.get(0).facts();
+        List<Action> facts = monitor.createSampleMonitorFacts();
+        // List<Action> facts = benchmarkData.get(5).facts();
 
         try (StatefulSession session = knowledge.newStatefulSession()) {
             Measurement m = monitor.processFacts(knowledge, session, facts);
             System.out.println(m);
         }
         service.shutdown();
-
-        // Measurement measurement = monitor.matchFacts(knowledge, facts);
-        // System.out.println(measurement);
-        // service.shutdown();
     }
 
     static void runBenchmarks(List<BenchmarkData> benchmarkData, Integer warmupRepetitions, Integer repetitions) {
@@ -86,6 +80,8 @@ public class App {
         // } catch (InterruptedException | ExecutionException e) {
         //     e.printStackTrace();
         // }
-        runBenchmarks(benchmarkData, 5, 5);
+
+        demo();
+        // runBenchmarks(benchmarkData, 3, 5);
     }
 }

@@ -2,6 +2,8 @@ package com.example;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +25,10 @@ public class SmartHouseMonitor {
                 (timestamp2.before(timestamp3) || timestamp2.equals(timestamp3));
 
     }
+    static void busyLoop() {
+        long start = System.nanoTime();
+        while (System.nanoTime() - start < 100000) { }
+    }
 
     boolean bathroomOccupied(IntToValue values) {
         Action.Motion motion = (Action.Motion) values.get(0);
@@ -32,6 +38,7 @@ public class SmartHouseMonitor {
         List<String> rooms = List.of(motion.room(), ambientLight.room(), light.room());
         List<Date> timestamps = List.of(motion.timestamp(), ambientLight.timestamp(), light.timestamp());
 
+        busyLoop();
         return validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
                 && rooms.stream().allMatch(room -> room.equals("bathroom"))
                 && motion.status()
@@ -39,41 +46,41 @@ public class SmartHouseMonitor {
                 && ambientLight.lightLevel() <= 40;
     }
 
-    boolean occupiedHome(IntToValue values) {
-        Action.Motion motion1 = (Action.Motion) values.get(0);
-        Action.Contact contact = (Action.Contact) values.get(1);
-        Action.Motion motion2 = (Action.Motion) values.get(2);
+    // boolean occupiedHome(IntToValue values) {
+    //     Action.Motion motion1 = (Action.Motion) values.get(0);
+    //     Action.Contact contact = (Action.Contact) values.get(1);
+    //     Action.Motion motion2 = (Action.Motion) values.get(2);
 
-        List<Boolean> statuses = List.of(motion1.status(), contact.status(), motion2.status());
-        List<Date> timestamps = List.of(motion1.timestamp(), contact.timestamp(), motion2.timestamp());
+    //     List<Boolean> statuses = List.of(motion1.status(), contact.status(), motion2.status());
+    //     List<Date> timestamps = List.of(motion1.timestamp(), contact.timestamp(), motion2.timestamp());
 
-        return motion1.id() != motion2.id()
-                && validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
-                && statuses.stream().allMatch(status -> status)
-                && motion1.room().equals("front_door")
-                && contact.room().equals("front_door")
-                && motion2.room().equals("entrance_hall");
-    }
+    //     return motion1.id() != motion2.id()
+    //             && validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
+    //             && statuses.stream().allMatch(status -> status)
+    //             && motion1.room().equals("front_door")
+    //             && contact.room().equals("front_door")
+    //             && motion2.room().equals("entrance_hall");
+    // }
 
-    boolean emptyHome(IntToValue values) {
-        Action.Motion motion1 = (Action.Motion) values.get(0);
-        Action.Contact contact = (Action.Contact) values.get(1);
-        Action.Motion motion2 = (Action.Motion) values.get(2);
+    // boolean emptyHome(IntToValue values) {
+    //     Action.Motion motion1 = (Action.Motion) values.get(0);
+    //     Action.Contact contact = (Action.Contact) values.get(1);
+    //     Action.Motion motion2 = (Action.Motion) values.get(2);
 
-        List<Boolean> statuses = List.of(motion1.status(), contact.status(), motion2.status());
-        List<Date> timestamps = List.of(motion1.timestamp(), contact.timestamp(), motion2.timestamp());
+    //     List<Boolean> statuses = List.of(motion1.status(), contact.status(), motion2.status());
+    //     List<Date> timestamps = List.of(motion1.timestamp(), contact.timestamp(), motion2.timestamp());
 
-        return motion1.id() != motion2.id()
-                && validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
-                && statuses.stream().allMatch(status -> status)
-                && motion1.room().equals("entrance_hall")
-                && contact.room().equals("front_door")
-                && motion2.room().equals("front_door");
-    }
+    //     return motion1.id() != motion2.id()
+    //             && validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
+    //             && statuses.stream().allMatch(status -> status)
+    //             && motion1.room().equals("entrance_hall")
+    //             && contact.room().equals("front_door")
+    //             && motion2.room().equals("front_door");
+    // }
 
     List<List<Integer>> rule1Matches = new ArrayList<>();
-    List<List<Integer>> rule2Matches = new ArrayList<>();
-    List<List<Integer>> rule3Matches = new ArrayList<>();
+    // List<List<Integer>> rule2Matches = new ArrayList<>();
+    // List<List<Integer>> rule3Matches = new ArrayList<>();
 
     public Knowledge createMonitorKnowledge(KnowledgeService service) {
         Knowledge knowledge = service.newKnowledge()
@@ -89,37 +96,37 @@ public class SmartHouseMonitor {
                     Action.AmbientLight ambientLight = ctx.get("$ambientLight");
                     Action.Light light = ctx.get("$light");
                     rule1Matches.add(List.of(motion.id(), ambientLight.id(), light.id()));
-                })
-                .build()
-                .builder()
-                .newRule("E5.a")
-                .forEach(
-                        "$motion1", Action.Motion.class,
-                        "$contact", Action.Contact.class,
-                        "$motion2", Action.Motion.class)
-                .where(this::occupiedHome, "$motion1", "$contact", "$motion2")
-                .execute(ctx -> {
-                    Action.Motion motion1 = ctx.get("$motion1");
-                    Action.Contact contact = ctx.get("$contact");
-                    Action.Motion motion2 = ctx.get("$motion2");
-                    rule2Matches.add(List.of(motion1.id(), contact.id(), motion2.id()));
-                })
-                .build()
-                .builder()
-                .newRule("E5.b")
-                .forEach(
-                        "$motion1", Action.Motion.class,
-                        "$contact", Action.Contact.class,
-                        "$motion2", Action.Motion.class)
-                .where(this::emptyHome, "$motion1", "$contact", "$motion2")
-                .execute(ctx -> {
-                    Action.Motion motion1 = ctx.get("$motion1");
-                    Action.Contact contact = ctx.get("$contact");
-                    Action.Motion motion2 = ctx.get("$motion2");
+                }).build();
+                // .build()
+                // .builder()
+                // .newRule("E5.a")
+                // .forEach(
+                //         "$motion1", Action.Motion.class,
+                //         "$contact", Action.Contact.class,
+                //         "$motion2", Action.Motion.class)
+                // .where(this::occupiedHome, "$motion1", "$contact", "$motion2")
+                // .execute(ctx -> {
+                //     Action.Motion motion1 = ctx.get("$motion1");
+                //     Action.Contact contact = ctx.get("$contact");
+                //     Action.Motion motion2 = ctx.get("$motion2");
+                //     rule2Matches.add(List.of(motion1.id(), contact.id(), motion2.id()));
+                // })
+                // .build()
+                // .builder()
+                // .newRule("E5.b")
+                // .forEach(
+                //         "$motion1", Action.Motion.class,
+                //         "$contact", Action.Contact.class,
+                //         "$motion2", Action.Motion.class)
+                // .where(this::emptyHome, "$motion1", "$contact", "$motion2")
+                // .execute(ctx -> {
+                //     Action.Motion motion1 = ctx.get("$motion1");
+                //     Action.Contact contact = ctx.get("$contact");
+                //     Action.Motion motion2 = ctx.get("$motion2");
 
-                    rule3Matches.add(List.of(motion1.id(), contact.id(), motion2.id()));
-                })
-                .build();
+                //     rule3Matches.add(List.of(motion1.id(), contact.id(), motion2.id()));
+                // })
+                // .build();
                 // .builder()
                 // .newRule("ShutOff")
                 // .forEach(
@@ -133,33 +140,55 @@ public class SmartHouseMonitor {
         List<Action> facts = new ArrayList<>();
         facts.add(new Action.Motion(0, true, "bathroom", new Date()));
         facts.add(new Action.AmbientLight(1, 39, "bathroom", new Date()));
-        facts.add(new Action.Light(2, false, "bathroom", new Date()));
 
-        facts.add(new Action.Motion(3, true, "front_door", new Date()));
-        facts.add(new Action.Contact(4, true, "front_door", new Date()));
-        facts.add(new Action.Motion(5, true, "entrance_hall", new Date()));
+        facts.add(new Action.Motion(2, true, "bathroom", new Date()));
+        facts.add(new Action.AmbientLight(3, 39, "bathroom", new Date()));
 
-        facts.add(new Action.Motion(6, true, "entrance_hall", new Date()));
-        facts.add(new Action.Contact(7, true, "front_door", new Date()));
-        facts.add(new Action.Motion(8, true, "front_door", new Date()));
+        facts.add(new Action.Motion(4, true, "bathroom", new Date()));
+        facts.add(new Action.AmbientLight(5, 39, "bathroom", new Date()));
+
+        facts.add(new Action.Motion(6, true, "bathroom", new Date()));
+        facts.add(new Action.AmbientLight(7, 39, "bathroom", new Date()));
+
+        facts.add(new Action.Motion(8, true, "bathroom", new Date()));
+        facts.add(new Action.AmbientLight(9, 39, "bathroom", new Date()));
+
+        facts.add(new Action.Motion(10, true, "bathroom", new Date()));
+        facts.add(new Action.AmbientLight(11, 39, "bathroom", new Date()));
+
+        facts.add(new Action.Motion(12, true, "bathroom", new Date()));
+        facts.add(new Action.AmbientLight(13, 39, "bathroom", new Date()));
+
+        facts.add(new Action.Light(14, false, "bathroom", new Date()));
+
 
         // facts.add(new Action.Motion(9, true, "fsdagsfgsfg", new Date()));
         // facts.add(new Action.AmbientLight(10, 39, "fsdagsfgsfg", new Date()));
         // facts.add(new Action.Light(11, false, "fsdagsfgsfg", new Date()));
 
+        // facts.add(new Action.Motion(3, true, "front_door", new Date()));
+        // facts.add(new Action.Contact(4, true, "front_door", new Date()));
+        // facts.add(new Action.Motion(5, true, "entrance_hall", new Date()));
+
         // facts.add(new Action.Motion(12, true, "gdsfhdfhdsh", new Date()));
         // facts.add(new Action.Contact(13, true, "gdsfhdfhdsh", new Date()));
         // facts.add(new Action.Motion(14, true, "gdsrgdsh", new Date()));
+
+        // facts.add(new Action.Motion(6, true, "entrance_hall", new Date()));
+        // facts.add(new Action.Contact(7, true, "front_door", new Date()));
+        // facts.add(new Action.Motion(8, true, "front_door", new Date()));
 
         // facts.add(new Action.Motion(15, true, "gdsrgdsh", new Date()));
         // facts.add(new Action.Contact(16, true, "gdsfhdfhdsh", new Date()));
         // facts.add(new Action.Motion(17, true, "gdsfhdfhdsh", new Date()));
 
+
+
         return facts;
     }
-    
+
     private Map<Integer, FactHandle> factHandles = new HashMap<>();
-    
+
     public Map<Integer, FactHandle> getFactHandles() {
         return factHandles;
     }
@@ -216,35 +245,54 @@ public class SmartHouseMonitor {
             }
         }
     }
-    
+
+    Comparator<List<Integer>> lexComparator = new LexComparator();
+
     public List<Integer> matchFact(Knowledge knowledge, StatefulSession session, Action fact) {
         List<List<Integer>> matchesAcrossRules = new ArrayList<>();
         List<Integer> selectedMatch = new ArrayList<>();
         insertFact(fact, session);
         session.fire();
         if (rule1Matches.size() > 0) {
+            Collections.sort(rule1Matches, lexComparator);
+                 
             List<Integer> match = rule1Matches.get(0);
             matchesAcrossRules.add(match);
             rule1Matches.remove(match);
         }
-        if (rule2Matches.size() > 0) {
-            List<Integer> match = rule2Matches.get(0);
-            matchesAcrossRules.add(match);
-            rule2Matches.remove(match);
-        }
-        if (rule3Matches.size() > 0) {
-            List<Integer> match = rule3Matches.get(0);
-            matchesAcrossRules.add(match);
-            rule3Matches.remove(match);
-        }
+        // if (rule2Matches.size() > 0) {
+        //     List<Integer> match = rule2Matches.get(0);
+        //     matchesAcrossRules.add(match);
+        //     rule2Matches.remove(match);
+        // }
+        // if (rule3Matches.size() > 0) {
+        //     List<Integer> match = rule3Matches.get(0);
+        //     matchesAcrossRules.add(match);
+        //     rule3Matches.remove(match);
+        // }
         if (matchesAcrossRules.size() > 0) {
+            Collections.sort(matchesAcrossRules, lexComparator);
             selectedMatch = matchesAcrossRules.get(0);
-
+            // System.out.println("Selected Match: " + selectedMatch);
+            // System.out.println("Rule 1 Matches: " + rule1Matches.size());
+            // System.out.println("Rule 2 Matches: " + rule2Matches.size());
+            // System.out.println("Rule 3 Matches: " + rule3Matches.size());
+            // System.out.println("Matches Across Rules: " + matchesAcrossRules.size());
+            // Clean up
             session.delete(factHandles.get(selectedMatch.get(0)));
             session.delete(factHandles.get(selectedMatch.get(1)));
             session.delete(factHandles.get(selectedMatch.get(2)));
-            // Clean up
+
+            factHandles.remove(selectedMatch.get(0));
+            factHandles.remove(selectedMatch.get(1));
+            factHandles.remove(selectedMatch.get(2));
+
+            rule1Matches.clear();
+            // rule2Matches.clear();
+            // rule3Matches.clear();
         }
+
+        matchesAcrossRules.clear();
         return selectedMatch;
     }
 
@@ -262,7 +310,7 @@ public class SmartHouseMonitor {
 
         endTime = System.currentTimeMillis();
 
-        System.out.println("Matches: " + matches.size());
+        // System.out.println("Matches: " + matches);
 
         return new Measurement(Duration.ofMillis(endTime - startTime));
     }

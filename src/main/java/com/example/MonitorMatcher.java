@@ -9,7 +9,7 @@ import org.evrete.api.StatefulSession;
 import com.example.MsgTypes.Action;
 
 public class MonitorMatcher {
-    
+
     private LinkedTransferQueue<Action> queue;
     private SmartHouseMonitor monitor;
 
@@ -38,16 +38,15 @@ public class MonitorMatcher {
             while (!isDone) {
                 Action action = queue.take();
                 switch (action) {
-                    case Action.ShutOff s -> 
-                        isDone = true;                
-                    default -> 
-                        {
-                            // List<Integer> match = 
-                            monitor.matchFact(knowledge, session, action);
-                            // if (match.size() > 0) {
-                            //     System.out.println("Match: " + match);
-                            // }
-                        }
+                    case Action.ShutOff s ->
+                        isDone = true;
+                    default -> {
+                        // List<Integer> match =
+                        monitor.matchFact(knowledge, session, action);
+                        // if (match.size() > 0) {
+                        // System.out.println("Match: " + match);
+                        // }
+                    }
                 }
             }
         } catch (InterruptedException e) {
