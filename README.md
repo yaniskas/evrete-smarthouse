@@ -6,7 +6,11 @@
 
 In this project, we have implemented the Smart House monitor example from our
 paper using the RETE algorithm provided by the [Evrete](https://www.evrete.org/)
-library. Recall that the join patterns based implementation of the Smart House
+library. The Java Development Kit (version 21 or later) is required to run the
+project and the Maven build tool is used to manage the project dependencies.
+The project uses version 3.2.02 of the Evrete library.
+
+Recall that the join patterns based implementation of the Smart House
 monitor defines the following join patterns:
 
 ```scala
@@ -83,5 +87,7 @@ to the `rule1Matches` list. This is done to keep track of the matched facts,
 which will be used to select a *single* winner set of facts from across all
 rules.
 
-To be continued...
+### Becnchmarking
 
+See the [Reproducing Individual Claims](README.md) section for details on how to
+reproduce the individual claims made in the paper.

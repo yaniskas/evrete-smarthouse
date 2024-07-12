@@ -3,6 +3,8 @@ package com.example;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -50,10 +52,17 @@ public class SmartHomeMonitorBenchmark {
         this.monitorData = monitorData;
     }
 
-    public SmartHomeMonitorBenchmark(List<BenchmarkData> monitorData, int warmupRepetitions, int repetitions) {
+    private boolean withHeavyGuards;
+
+    public boolean isWithHeavyGuards() {
+        return withHeavyGuards;
+    }
+
+    public SmartHomeMonitorBenchmark(List<BenchmarkData> monitorData, int warmupRepetitions, int repetitions, boolean withHeavyGuards) {
         this.monitorData = monitorData;
         this.warmupRepetitions = warmupRepetitions;
         this.iterations = repetitions;
+        this.withHeavyGuards = withHeavyGuards;
     }
 
     public Measurement measureMonitor(BenchmarkData benchmarkData) throws InterruptedException, ExecutionException {
@@ -62,7 +71,7 @@ public class SmartHomeMonitorBenchmark {
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var monitor = new MonitorMatcher(
                     new LinkedTransferQueue<Action>(),
-                    new SmartHouseMonitor());
+                    new SmartHouseMonitor(this.withHeavyGuards));
 
             var monitorMatcher = executor.submit(() -> {
                 monitor.match();
@@ -115,7 +124,7 @@ public class SmartHomeMonitorBenchmark {
         System.out.println("Warmup Finished");
     }
 
-    public void runBenchmark() {
+    public void runBenchmark(String dataDirPath) {
         // Collect the measurements from the benchmark repetitions
         System.out.println("Starting Benchmark");
         Map<Integer, List<Long>> benchmarkResults = new TreeMap<>();
@@ -142,11 +151,24 @@ public class SmartHomeMonitorBenchmark {
             }
         }
 
-        String timestamp = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
+        String timestamp   = null;
+        String dataDirName = null;
 
-        SmartHomeMonitorBenchmark.writeToCsv(benchmarkResults,
-                String.format("%s/data/%s_RETE_SmartHouse.csv",
-                        System.getProperty("user.dir"), timestamp));
+        if (withHeavyGuards) {
+            timestamp   = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
+            dataDirName = String.format("%s/%s_Evrete_SmartHouseWithHeavyGuards", dataDirPath, timestamp);
+        } else {
+            timestamp = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
+            dataDirName = String.format("%s/%s_Evrete_SmartHouse", dataDirPath, timestamp);
+        }
+
+        try {
+            Files.createDirectories(Paths.get(dataDirName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        SmartHomeMonitorBenchmark.writeToCsv(benchmarkResults, dataDirName + "/Evrete_SmartHouse.csv");
         System.out.println("Benchmark Finished");
     }
 

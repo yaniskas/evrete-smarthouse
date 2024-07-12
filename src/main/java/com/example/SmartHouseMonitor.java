@@ -19,6 +19,8 @@ import com.example.MsgTypes.*;
 
 public class SmartHouseMonitor {
 
+    private boolean isGuardDelayed;
+
     boolean validateTimestampsOrder(Date timestamp1, Date timestamp2, Date timestamp3) {
 
         return (timestamp1.before(timestamp2) || timestamp1.equals(timestamp2)) &&
@@ -38,7 +40,9 @@ public class SmartHouseMonitor {
         List<String> rooms = List.of(motion.room(), ambientLight.room(), light.room());
         List<Date> timestamps = List.of(motion.timestamp(), ambientLight.timestamp(), light.timestamp());
 
-        busyLoop();
+        if (isGuardDelayed) {
+            busyLoop();
+        }
         return validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
                 && rooms.stream().allMatch(room -> room.equals("bathroom"))
                 && motion.status()
@@ -46,41 +50,12 @@ public class SmartHouseMonitor {
                 && ambientLight.lightLevel() <= 40;
     }
 
-    // boolean occupiedHome(IntToValue values) {
-    //     Action.Motion motion1 = (Action.Motion) values.get(0);
-    //     Action.Contact contact = (Action.Contact) values.get(1);
-    //     Action.Motion motion2 = (Action.Motion) values.get(2);
-
-    //     List<Boolean> statuses = List.of(motion1.status(), contact.status(), motion2.status());
-    //     List<Date> timestamps = List.of(motion1.timestamp(), contact.timestamp(), motion2.timestamp());
-
-    //     return motion1.id() != motion2.id()
-    //             && validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
-    //             && statuses.stream().allMatch(status -> status)
-    //             && motion1.room().equals("front_door")
-    //             && contact.room().equals("front_door")
-    //             && motion2.room().equals("entrance_hall");
-    // }
-
-    // boolean emptyHome(IntToValue values) {
-    //     Action.Motion motion1 = (Action.Motion) values.get(0);
-    //     Action.Contact contact = (Action.Contact) values.get(1);
-    //     Action.Motion motion2 = (Action.Motion) values.get(2);
-
-    //     List<Boolean> statuses = List.of(motion1.status(), contact.status(), motion2.status());
-    //     List<Date> timestamps = List.of(motion1.timestamp(), contact.timestamp(), motion2.timestamp());
-
-    //     return motion1.id() != motion2.id()
-    //             && validateTimestampsOrder(timestamps.get(0), timestamps.get(1), timestamps.get(2))
-    //             && statuses.stream().allMatch(status -> status)
-    //             && motion1.room().equals("entrance_hall")
-    //             && contact.room().equals("front_door")
-    //             && motion2.room().equals("front_door");
-    // }
+    public SmartHouseMonitor(boolean isGuardDelayed) {
+        super();
+        this.isGuardDelayed = isGuardDelayed;
+    }
 
     List<List<Integer>> rule1Matches = new ArrayList<>();
-    // List<List<Integer>> rule2Matches = new ArrayList<>();
-    // List<List<Integer>> rule3Matches = new ArrayList<>();
 
     public Knowledge createMonitorKnowledge(KnowledgeService service) {
         Knowledge knowledge = service.newKnowledge()
@@ -97,42 +72,6 @@ public class SmartHouseMonitor {
                     Action.Light light = ctx.get("$light");
                     rule1Matches.add(List.of(motion.id(), ambientLight.id(), light.id()));
                 }).build();
-                // .build()
-                // .builder()
-                // .newRule("E5.a")
-                // .forEach(
-                //         "$motion1", Action.Motion.class,
-                //         "$contact", Action.Contact.class,
-                //         "$motion2", Action.Motion.class)
-                // .where(this::occupiedHome, "$motion1", "$contact", "$motion2")
-                // .execute(ctx -> {
-                //     Action.Motion motion1 = ctx.get("$motion1");
-                //     Action.Contact contact = ctx.get("$contact");
-                //     Action.Motion motion2 = ctx.get("$motion2");
-                //     rule2Matches.add(List.of(motion1.id(), contact.id(), motion2.id()));
-                // })
-                // .build()
-                // .builder()
-                // .newRule("E5.b")
-                // .forEach(
-                //         "$motion1", Action.Motion.class,
-                //         "$contact", Action.Contact.class,
-                //         "$motion2", Action.Motion.class)
-                // .where(this::emptyHome, "$motion1", "$contact", "$motion2")
-                // .execute(ctx -> {
-                //     Action.Motion motion1 = ctx.get("$motion1");
-                //     Action.Contact contact = ctx.get("$contact");
-                //     Action.Motion motion2 = ctx.get("$motion2");
-
-                //     rule3Matches.add(List.of(motion1.id(), contact.id(), motion2.id()));
-                // })
-                // .build();
-                // .builder()
-                // .newRule("ShutOff")
-                // .forEach(
-                //         "$shutOff", Action.ShutOff.class)
-                // .execute(ctx -> )
-
         return knowledge;
     }
 
@@ -160,30 +99,6 @@ public class SmartHouseMonitor {
         facts.add(new Action.AmbientLight(13, 39, "bathroom", new Date()));
 
         facts.add(new Action.Light(14, false, "bathroom", new Date()));
-
-
-        // facts.add(new Action.Motion(9, true, "fsdagsfgsfg", new Date()));
-        // facts.add(new Action.AmbientLight(10, 39, "fsdagsfgsfg", new Date()));
-        // facts.add(new Action.Light(11, false, "fsdagsfgsfg", new Date()));
-
-        // facts.add(new Action.Motion(3, true, "front_door", new Date()));
-        // facts.add(new Action.Contact(4, true, "front_door", new Date()));
-        // facts.add(new Action.Motion(5, true, "entrance_hall", new Date()));
-
-        // facts.add(new Action.Motion(12, true, "gdsfhdfhdsh", new Date()));
-        // facts.add(new Action.Contact(13, true, "gdsfhdfhdsh", new Date()));
-        // facts.add(new Action.Motion(14, true, "gdsrgdsh", new Date()));
-
-        // facts.add(new Action.Motion(6, true, "entrance_hall", new Date()));
-        // facts.add(new Action.Contact(7, true, "front_door", new Date()));
-        // facts.add(new Action.Motion(8, true, "front_door", new Date()));
-
-        // facts.add(new Action.Motion(15, true, "gdsrgdsh", new Date()));
-        // facts.add(new Action.Contact(16, true, "gdsfhdfhdsh", new Date()));
-        // facts.add(new Action.Motion(17, true, "gdsfhdfhdsh", new Date()));
-
-
-
         return facts;
     }
 
@@ -260,24 +175,10 @@ public class SmartHouseMonitor {
             matchesAcrossRules.add(match);
             rule1Matches.remove(match);
         }
-        // if (rule2Matches.size() > 0) {
-        //     List<Integer> match = rule2Matches.get(0);
-        //     matchesAcrossRules.add(match);
-        //     rule2Matches.remove(match);
-        // }
-        // if (rule3Matches.size() > 0) {
-        //     List<Integer> match = rule3Matches.get(0);
-        //     matchesAcrossRules.add(match);
-        //     rule3Matches.remove(match);
-        // }
+
         if (matchesAcrossRules.size() > 0) {
             Collections.sort(matchesAcrossRules, lexComparator);
             selectedMatch = matchesAcrossRules.get(0);
-            // System.out.println("Selected Match: " + selectedMatch);
-            // System.out.println("Rule 1 Matches: " + rule1Matches.size());
-            // System.out.println("Rule 2 Matches: " + rule2Matches.size());
-            // System.out.println("Rule 3 Matches: " + rule3Matches.size());
-            // System.out.println("Matches Across Rules: " + matchesAcrossRules.size());
             // Clean up
             session.delete(factHandles.get(selectedMatch.get(0)));
             session.delete(factHandles.get(selectedMatch.get(1)));
@@ -288,8 +189,6 @@ public class SmartHouseMonitor {
             factHandles.remove(selectedMatch.get(2));
 
             rule1Matches.clear();
-            // rule2Matches.clear();
-            // rule3Matches.clear();
         }
 
         matchesAcrossRules.clear();

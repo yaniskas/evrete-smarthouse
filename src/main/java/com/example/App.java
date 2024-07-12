@@ -14,20 +14,13 @@ import com.google.gson.JsonArray;
 
 public class App {
 
-    final static String SMART_HOUSE_DATA_FILE = "src/main/java/com/example/MonitorData/2024_07_05_12_25_41_smartHouseData.json";
-    
-    static String smartHouseDataStr = Utils.readFileAsJsonStr(SMART_HOUSE_DATA_FILE);
-    static JsonArray smartHouseData = Utils.parseJson(smartHouseDataStr);
-    static List<BenchmarkData> benchmarkData = Utils.parseBenchmarkData(smartHouseData);
-    static List<Action> sampleData = benchmarkData.get(1).facts();
-
-    static void runMonitor() throws InterruptedException, ExecutionException {
+    static void runMonitor(List<Action> sampleData, boolean isGuardDelayed) throws InterruptedException, ExecutionException {
         Long startTime = null; 
         Long endTime = null;
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var monitor = new MonitorMatcher(
                     new LinkedTransferQueue<Action>(),
-                    new SmartHouseMonitor());
+                    new SmartHouseMonitor(isGuardDelayed));
 
             var monitorMatcher = executor.submit(() -> {
                 monitor.match();
@@ -52,12 +45,11 @@ public class App {
         System.out.println("Time: " + (endTime - startTime) + " ms");
     }
 
-    static void demo() {
+    static void demo(boolean isGuardDelayed) {
         KnowledgeService service = new KnowledgeService();
-        SmartHouseMonitor monitor = new SmartHouseMonitor();
+        SmartHouseMonitor monitor = new SmartHouseMonitor(isGuardDelayed);
         Knowledge knowledge = monitor.createMonitorKnowledge(service);
         List<Action> facts = monitor.createSampleMonitorFacts();
-        // List<Action> facts = benchmarkData.get(5).facts();
 
         try (StatefulSession session = knowledge.newStatefulSession()) {
             Measurement m = monitor.processFacts(knowledge, session, facts);
@@ -66,22 +58,34 @@ public class App {
         service.shutdown();
     }
 
-    static void runBenchmarks(List<BenchmarkData> benchmarkData, Integer warmupRepetitions, Integer repetitions) {
-        SmartHomeMonitorBenchmark benchmark = new SmartHomeMonitorBenchmark(benchmarkData, warmupRepetitions, repetitions);
+    static void runBenchmarks(List<BenchmarkData> benchmarkData, Integer warmupRepetitions, Integer repetitions, boolean isGuardDelayed, String outputDataDir) {
+        SmartHomeMonitorBenchmark benchmark = new SmartHomeMonitorBenchmark(benchmarkData, warmupRepetitions, repetitions, isGuardDelayed);
 
         benchmark.runWarmup();
 
-        benchmark.runBenchmark();
+        benchmark.runBenchmark(outputDataDir);
     }
 
     public static void main(String[] args) {
-        // try {
-        //     runMonitor();
-        // } catch (InterruptedException | ExecutionException e) {
-        //     e.printStackTrace();
-        // }
 
-        demo();
-        // runBenchmarks(benchmarkData, 3, 5);
+        if (args.length == 0) {
+            System.out.println("Please provide the path to the smart house data file.");
+            return;
+        }
+
+        String smartHouseDataFilePath = args[0];
+        
+        String outputDataDir = (args.length > 1) ? args[1] : "";
+        if (outputDataDir.isEmpty()) {
+            System.err.println("Please provide the path to the output data directory.");
+        }
+
+        boolean isGuardDelayed = (args.length > 2) && Boolean.parseBoolean(args[2]);
+
+        String smartHouseDataStr = Utils.readFileAsJsonStr(smartHouseDataFilePath);
+        JsonArray smartHouseData = Utils.parseJson(smartHouseDataStr);
+        List<BenchmarkData> benchmarkData = Utils.parseBenchmarkData(smartHouseData);
+
+        runBenchmarks(benchmarkData, 3, 5, isGuardDelayed, outputDataDir);
     }
 }
