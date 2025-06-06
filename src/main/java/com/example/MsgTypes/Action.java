@@ -4,6 +4,8 @@ import java.util.*;
 import com.example.Utils;
 
 public sealed interface Action {
+    Action withId(int newId);
+
     record AmbientLight(int id, int lightLevel, String room, Date timestamp) implements Action {
 
         public static AmbientLight fromJson(String json) {
@@ -20,6 +22,10 @@ public sealed interface Action {
                     timestamp);
         }
 
+        @Override
+        public AmbientLight withId(int newId) {
+            return new AmbientLight(newId, lightLevel, room, timestamp);
+        }
     }
 
     record Consumption(int id, int consumption, Date timestamp) implements Action {
@@ -34,6 +40,11 @@ public sealed interface Action {
         @Override
         public String toString() {
             return String.format("Consumption{id=%d, consumption=%d, timestamp=%s}", id, consumption, timestamp);
+        }
+
+        @Override
+        public Consumption withId(int newId) {
+            return new Consumption(newId, consumption, timestamp);
         }
     }
 
@@ -52,6 +63,10 @@ public sealed interface Action {
             return String.format("Contact{id=%d, status=%s, room=%s, timestamp=%s}", id, status, room, timestamp);
         }
 
+        @Override
+        public Contact withId(int newId) {
+            return new Contact(newId, status, room, timestamp);
+        }
     }
 
     record DoorBell(int id, Date timestamp) implements Action {
@@ -69,6 +84,10 @@ public sealed interface Action {
             return String.format("DoorBell{id=%d, timestamp=%s}", id, timestamp);
         }
 
+        @Override
+        public DoorBell withId(int newId) {
+            return new DoorBell(newId, timestamp);
+        }
     }
 
     record HeatingF(int id, String tp, Date timestamp) implements Action {
@@ -85,6 +104,10 @@ public sealed interface Action {
             return String.format("HeatingF{id=%d, tp=%s, timestamp=%s}", id, tp, timestamp);
         }
 
+        @Override
+        public HeatingF withId(int newId) {
+            return new HeatingF(newId, tp, timestamp);
+        }
     }
 
     record Light(int id, boolean status, String room, Date timestamp) implements Action {
@@ -101,6 +124,11 @@ public sealed interface Action {
         public String toString() {
             return String.format("Light{id=%d, status=%s, room='%s', timestamp=%s}", id, status, room, timestamp);
         }
+
+        @Override
+        public Light withId(int newId) {
+            return new Light(newId, status, room, timestamp);
+        }
     }
 
     record Motion(int id, boolean status, String room, Date timestamp) implements Action {
@@ -115,6 +143,11 @@ public sealed interface Action {
         @Override
         public String toString() {
             return String.format("Motion{id=%d, status=%s, room='%s', timestamp=%s}", id, status, room, timestamp);
+        }
+
+        @Override
+        public Motion withId(int newId) {
+            return new Motion(newId, status, room, timestamp);
         }
     }
 
@@ -131,6 +164,11 @@ public sealed interface Action {
         @Override
         public String toString() {
             return "ShutOff{}";
+        }
+
+        @Override
+        public ShutOff withId(int newId) {
+            return new ShutOff();
         }
     }
 }

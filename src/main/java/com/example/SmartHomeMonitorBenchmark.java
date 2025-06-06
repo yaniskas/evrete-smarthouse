@@ -117,7 +117,8 @@ public class SmartHomeMonitorBenchmark {
                     }
                 }).collect(Collectors.toList());
 
-                Long averageTime = measurements.stream().mapToLong(m -> m.time().toMillis()).sum() / warmupRepetitions;
+//                Long averageTime = measurements.stream().mapToLong(m -> m.time().toMillis()).sum() / warmupRepetitions;
+                Long averageTime = measurements.stream().mapToLong(m -> m.time().toMillis()).sum();
                 warmupResults.put(benchmarkData.numberOfRandomFacts(), averageTime);
             }
         }
@@ -130,7 +131,10 @@ public class SmartHomeMonitorBenchmark {
         Map<Integer, List<Long>> benchmarkResults = new TreeMap<>();
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            int benchi = 0;
             for (BenchmarkData benchmarkData : monitorData) {
+                System.out.println("Running benchmark " + benchi);
+                benchi++;
                 List<Future<Measurement>> futures = new ArrayList<>();
                 for (int i = 0; i < iterations; i++) {
                     Future<Measurement> fut = executor.submit(() -> measureMonitor(benchmarkData));

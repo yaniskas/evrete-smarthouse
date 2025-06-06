@@ -82,10 +82,14 @@ public class App {
 
         boolean isGuardDelayed = (args.length > 2) && Boolean.parseBoolean(args[2]);
 
-        String smartHouseDataStr = Utils.readFileAsJsonStr(smartHouseDataFilePath);
-        JsonArray smartHouseData = Utils.parseJson(smartHouseDataStr);
-        List<BenchmarkData> benchmarkData = Utils.parseBenchmarkData(smartHouseData);
+        var matches = 25;
+        var heavyGuard = false;
+        var minParam = 0;
+        var paramStep = 1;
+        var maxParam = 25;
 
-        runBenchmarks(benchmarkData, 3, 5, isGuardDelayed, outputDataDir);
+        List<BenchmarkData> benchmarkData = Utils.generateBenchmarkData(matches, minParam, paramStep, maxParam);
+
+        runBenchmarks(benchmarkData, 0, 1, heavyGuard, outputDataDir);
     }
 }
