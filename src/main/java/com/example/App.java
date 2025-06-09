@@ -1,62 +1,30 @@
 package com.example;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedTransferQueue;
 
-import org.evrete.KnowledgeService;
-import org.evrete.api.Knowledge;
-import org.evrete.api.StatefulSession;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
-import com.example.MsgTypes.Action;
-import com.google.gson.JsonArray;
+@Command(name = "evrete-smarhouse", mixinStandardHelpOptions = true)
+public class App implements Runnable {
+    @Option(names = "--matches", description = "The maximum number of matches the smart house actor should perform", defaultValue = "25")
+    private int matches;
 
-public class App {
+    @Option(names = "--heavyGuard", description = "Whether to use a heavy guard", defaultValue = "false")
+    private boolean heavyGuard;
 
-    static void runMonitor(List<Action> sampleData, boolean isGuardDelayed) throws InterruptedException, ExecutionException {
-        Long startTime = null; 
-        Long endTime = null;
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var monitor = new MonitorMatcher(
-                    new LinkedTransferQueue<Action>(),
-                    new SmartHouseMonitor(isGuardDelayed));
+    @Option(names = "--minParam", description = "The minimum parameter value, default 0", defaultValue = "0")
+    private int minParam;
 
-            var monitorMatcher = executor.submit(() -> {
-                monitor.match();
-            });
+    @Option(names = "--paramStep", description = "The step by which the parameter value should increase, default 1", defaultValue = "1")
+    private int paramStep;
 
-            // start
-            startTime = System.currentTimeMillis();
-            var sender = executor.submit(() -> {
-                for (int i = 0; i < sampleData.size(); i++) {
-                    // System.out.println("Thread: " + Thread.currentThread());
-                    monitor.send(sampleData.get(i));
-                }
-            });
+    @Option(names = "--maxParam", description = "The maximum parameter value, default 20", defaultValue = "20")
+    private int maxParam;
 
-            sender.get();
-            monitor.send(new Action.ShutOff());
-            monitorMatcher.get();
-            endTime = System.currentTimeMillis();
-            // end
-        }
-        
-        System.out.println("Time: " + (endTime - startTime) + " ms");
-    }
-
-    static void demo(boolean isGuardDelayed) {
-        KnowledgeService service = new KnowledgeService();
-        SmartHouseMonitor monitor = new SmartHouseMonitor(isGuardDelayed);
-        Knowledge knowledge = monitor.createMonitorKnowledge(service);
-        List<Action> facts = monitor.createSampleMonitorFacts();
-
-        try (StatefulSession session = knowledge.newStatefulSession()) {
-            Measurement m = monitor.processFacts(knowledge, session, facts);
-            System.out.println(m);
-        }
-        service.shutdown();
-    }
+    @Option(names = "--path", description = "The folder path to which to write the benchmark results, default \"data\"", defaultValue = "data")
+    private String path;
 
     static void runBenchmarks(List<BenchmarkData> benchmarkData, Integer warmupRepetitions, Integer repetitions, boolean isGuardDelayed, String outputDataDir) {
         SmartHomeMonitorBenchmark benchmark = new SmartHomeMonitorBenchmark(benchmarkData, warmupRepetitions, repetitions, isGuardDelayed);
@@ -66,30 +34,17 @@ public class App {
         benchmark.runBenchmark(outputDataDir);
     }
 
-    public static void main(String[] args) {
-
-        if (args.length == 0) {
-            System.out.println("Please provide the path to the smart house data file.");
-            return;
-        }
-
-        String smartHouseDataFilePath = args[0];
-        
-        String outputDataDir = (args.length > 1) ? args[1] : "";
-        if (outputDataDir.isEmpty()) {
-            System.err.println("Please provide the path to the output data directory.");
-        }
-
-        boolean isGuardDelayed = (args.length > 2) && Boolean.parseBoolean(args[2]);
-
-        var matches = 25;
-        var heavyGuard = false;
-        var minParam = 0;
-        var paramStep = 1;
-        var maxParam = 25;
+    @Override
+    public void run() {
+        System.out.println("Running simple smart house benchmark with minParam = " + minParam + ", paramStep = " + paramStep +
+                ", maxParam = " + maxParam + ", matches = " + matches + ", heavyGuard = " + heavyGuard);
 
         List<BenchmarkData> benchmarkData = Utils.generateBenchmarkData(matches, minParam, paramStep, maxParam);
 
-        runBenchmarks(benchmarkData, 0, 1, heavyGuard, outputDataDir);
+        runBenchmarks(benchmarkData, 0, 1, heavyGuard, path);
+    }
+
+    public static void main(String[] args) {
+        new CommandLine(new App()).execute(args);
     }
 }
