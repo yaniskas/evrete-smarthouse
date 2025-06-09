@@ -1,6 +1,7 @@
 package com.example;
 
 import java.util.List;
+import java.util.Optional;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -26,22 +27,31 @@ public class App implements Runnable {
     @Option(names = "--path", description = "The folder path to which to write the benchmark results, default \"data\"", defaultValue = "data")
     private String path;
 
-    static void runBenchmarks(List<BenchmarkData> benchmarkData, Integer warmupRepetitions, Integer repetitions, boolean isGuardDelayed, String outputDataDir) {
-        SmartHomeMonitorBenchmark benchmark = new SmartHomeMonitorBenchmark(benchmarkData, warmupRepetitions, repetitions, isGuardDelayed);
+    @Option(names = "--repetitions", description = "The number of repetitions for each parameter value, default 1", defaultValue = "1")
+    private int repetitions;
+
+    @Option(names = "--warmup", description = "The number of parameter values to copy as warmup repetitions. If not set, it will be the number of parameter values divided by 4")
+    private Optional<Integer> warmup;
+
+    static void runBenchmarks(List<BenchmarkData> benchmarkData, Integer warmup, Integer repetitions, boolean heavyGuard, String path) {
+        SmartHomeMonitorBenchmark benchmark = new SmartHomeMonitorBenchmark(benchmarkData, warmup, repetitions, heavyGuard);
 
         benchmark.runWarmup();
 
-        benchmark.runBenchmark(outputDataDir);
+        benchmark.runBenchmark(path);
     }
 
     @Override
     public void run() {
+        int warmupInt = warmup.orElse(Math.ceilDiv((maxParam - minParam + 1), paramStep) / 4);
+
         System.out.println("Running simple smart house benchmark with minParam = " + minParam + ", paramStep = " + paramStep +
-                ", maxParam = " + maxParam + ", matches = " + matches + ", heavyGuard = " + heavyGuard);
+                ", maxParam = " + maxParam + ", matches = " + matches + ", heavyGuard = " + heavyGuard +
+                ", repetitions = " + repetitions + ", warmup = " + warmupInt);
 
         List<BenchmarkData> benchmarkData = Utils.generateBenchmarkData(matches, minParam, paramStep, maxParam);
 
-        runBenchmarks(benchmarkData, 0, 1, heavyGuard, path);
+        runBenchmarks(benchmarkData, warmupInt, repetitions, heavyGuard, path);
     }
 
     public static void main(String[] args) {

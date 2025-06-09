@@ -14,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedTransferQueue;
 import java.util.stream.Collectors;
 
@@ -22,14 +21,14 @@ import com.example.MsgTypes.Action;
 
 public class SmartHomeMonitorBenchmark {
 
-    private int iterations;
+    private int repetitions;
 
-    public int getIterations() {
-        return iterations;
+    public int getRepetitions() {
+        return repetitions;
     }
 
-    public void setIterations(int iterations) {
-        this.iterations = iterations;
+    public void setRepetitions(int repetitions) {
+        this.repetitions = repetitions;
     }
 
     private int warmupRepetitions;
@@ -61,7 +60,7 @@ public class SmartHomeMonitorBenchmark {
     public SmartHomeMonitorBenchmark(List<BenchmarkData> monitorData, int warmupRepetitions, int repetitions, boolean withHeavyGuards) {
         this.monitorData = monitorData;
         this.warmupRepetitions = warmupRepetitions;
-        this.iterations = repetitions;
+        this.repetitions = repetitions;
         this.withHeavyGuards = withHeavyGuards;
     }
 
@@ -96,31 +95,24 @@ public class SmartHomeMonitorBenchmark {
     }
 
     public void runWarmup() {
-        // Collect the measurements from the warmup repetitions
         System.out.println("Starting Warmup");
-        Map<Integer, Long> warmupResults = new TreeMap<>();
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            for (BenchmarkData benchmarkData : monitorData) {
-                List<Future<Measurement>> warmupFuts = new ArrayList<>();
-                for (int i = 0; i < warmupRepetitions; i++) {
-                    Future<Measurement> fut = executor.submit(() -> measureMonitor(benchmarkData));
-                    warmupFuts.add(fut);
-                }
 
-                // Get the measurements from the futures
-                List<Measurement> measurements = warmupFuts.stream().map(f -> {
-                    try {
-                        return f.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        e.printStackTrace();
-                        return null;
+        try {
+            for (int i = 0; i < warmupRepetitions ; i++) {
+                System.out.println("Running warmup benchmark " + i);
+                var benchmarkData = monitorData.get(i);
+
+                if (repetitions > 1) {
+                    for (int r = 0; r < repetitions; r++) {
+                        System.out.println("\tRepetition " + r);
+                        measureMonitor(benchmarkData);
                     }
-                }).collect(Collectors.toList());
-
-//                Long averageTime = measurements.stream().mapToLong(m -> m.time().toMillis()).sum() / warmupRepetitions;
-                Long averageTime = measurements.stream().mapToLong(m -> m.time().toMillis()).sum();
-                warmupResults.put(benchmarkData.numberOfRandomFacts(), averageTime);
+                } else {
+                    measureMonitor(benchmarkData);
+                }
             }
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
         System.out.println("Warmup Finished");
     }
@@ -130,29 +122,27 @@ public class SmartHomeMonitorBenchmark {
         System.out.println("Starting Benchmark");
         Map<Integer, List<Long>> benchmarkResults = new TreeMap<>();
 
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+        try {
             int benchi = 0;
             for (BenchmarkData benchmarkData : monitorData) {
                 System.out.println("Running benchmark " + benchi);
                 benchi++;
-                List<Future<Measurement>> futures = new ArrayList<>();
-                for (int i = 0; i < iterations; i++) {
-                    Future<Measurement> fut = executor.submit(() -> measureMonitor(benchmarkData));
-                    futures.add(fut);
-                }
+                List<Measurement> measurements = new ArrayList<>();
 
-                List<Measurement> measurements = futures.stream().map(f -> {
-                    try {
-                        return f.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        e.printStackTrace();
-                        return null;
+                if (repetitions > 1) {
+                    for (int r = 0; r < repetitions; r++) {
+                        System.out.println("\tRepetition " + r);
+                        measurements.add(measureMonitor(benchmarkData));
                     }
-                }).collect(Collectors.toList());
+                } else {
+                    measurements.add(measureMonitor(benchmarkData));
+                }
 
                 List<Long> times = measurements.stream().map(m -> m.time().toMillis()).collect(Collectors.toList());
                 benchmarkResults.put(benchmarkData.numberOfRandomFacts(), times);
             }
+        } catch (ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         String timestamp   = null;
